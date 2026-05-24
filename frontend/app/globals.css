@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+:root {
+  --background: #eeeeee;
+  --foreground: #303030;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-display: "Bricolage Grotesque", "Inter", Arial, sans-serif;
+  --font-action: "Inter", Arial, sans-serif;
+}
+
+.bg-app-gradient {
+  background: linear-gradient(180deg, #eeeeee 0%, #dadada 100%);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Bricolage Grotesque", "Inter", Arial, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.field-label {
+  display: block;
+  font-family: "Bricolage Grotesque", "Inter", Arial, sans-serif;
+  font-weight: 800;
+  color: #303030;
+}
+
+.field-input {
+  margin-top: 0.75rem;
+  height: 3.25rem;
+  width: 100%;
+  border-radius: 9999px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0 1.25rem;
+  font-family: "Inter", Arial, sans-serif;
+  font-weight: 500;
+  outline: none;
+}
+
+.field-input:focus {
+  border-color: rgba(0, 0, 0, 0.35);
+  background: #ffffff;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  body {
+    background: #d6d6d6;
+  }
+}
