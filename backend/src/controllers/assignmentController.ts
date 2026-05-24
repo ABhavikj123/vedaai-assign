@@ -82,6 +82,23 @@ const getRouteId = (value: string | string[] | undefined): string => {
   return value;
 };
 
+const withTimeout = async <T>(operation: Promise<T>, timeoutMs: number, message: string): Promise<T> => {
+  let timeoutId: NodeJS.Timeout | undefined;
+
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_resolve, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(message)), timeoutMs);
+      })
+    ]);
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 export const createAssignment = asyncHandler(async (req, res) => {
   const teacherId = req.user!._id.toString();
   const body = createAssignmentSchema.parse(normalizeCreateBody(req.body as Record<string, unknown>));
@@ -122,15 +139,19 @@ export const createAssignment = asyncHandler(async (req, res) => {
   });
 
   try {
-    await invalidateAssignmentCaches(teacherId, assignment._id.toString());
-    await enqueueAssignmentGeneration({
-      assignmentId: assignment._id.toString(),
-      teacherId
-    });
+    void invalidateAssignmentCaches(teacherId, assignment._id.toString());
+    await withTimeout(
+      enqueueAssignmentGeneration({
+        assignmentId: assignment._id.toString(),
+        teacherId
+      }),
+      8000,
+      "Assignment generation queue timed out"
+    );
   } catch (error) {
     await Assignment.updateOne({ _id: assignment._id }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
-    await invalidateAssignmentCaches(teacherId, assignment._id.toString());
-    await setCachedAssignmentStatus(assignment._id.toString(), "failed");
+    void invalidateAssignmentCaches(teacherId, assignment._id.toString());
+    void setCachedAssignmentStatus(assignment._id.toString(), "failed");
     throw new AppError("AI generation queue is unavailable. Please check Redis and try again.", 503);
   }
 
@@ -153,7 +174,7 @@ export const listAssignments = asyncHandler(async (req, res) => {
   }
 
   const assignments = await Assignment.find({ teacherId }).sort({ createdAt: -1 }).lean();
-  await setCachedAssignmentList(teacherId, assignments);
+  void setCachedAssignmentList(teacherId, assignments);
 
   return res.json({
     success: true,
@@ -184,18 +205,22 @@ export const regenerateAssignment = asyncHandler(async (req, res) => {
     throw new AppError("Assignment not found", 404);
   }
 
-  await invalidateAssignmentCaches(teacherId, assignmentId);
-  await setCachedAssignmentStatus(assignmentId, "pending");
+  void invalidateAssignmentCaches(teacherId, assignmentId);
+  void setCachedAssignmentStatus(assignmentId, "pending");
 
   try {
-    await enqueueAssignmentGeneration({
-      assignmentId,
-      teacherId
-    });
+    await withTimeout(
+      enqueueAssignmentGeneration({
+        assignmentId,
+        teacherId
+      }),
+      8000,
+      "Assignment generation queue timed out"
+    );
   } catch (error) {
     await Assignment.updateOne({ _id: assignmentId }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
-    await invalidateAssignmentCaches(teacherId, assignmentId);
-    await setCachedAssignmentStatus(assignmentId, "failed");
+    void invalidateAssignmentCaches(teacherId, assignmentId);
+    void setCachedAssignmentStatus(assignmentId, "failed");
     throw new AppError("AI generation queue is unavailable. Please check Redis and try again.", 503);
   }
 
@@ -216,7 +241,7 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
     throw new AppError("Assignment not found", 404);
   }
 
-  await invalidateAssignmentCaches(teacherId, assignmentId);
+  void invalidateAssignmentCaches(teacherId, assignmentId);
 
   return res.json({
     success: true

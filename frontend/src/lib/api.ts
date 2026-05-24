@@ -42,7 +42,7 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     if (!response.ok) {
       const safeMessage =
         response.status >= 500
-          ? "The server could not complete this action. Please try again after a moment."
+          ? body?.message || "The server could not complete this action. Please try again after a moment."
           : body?.message || "Request failed";
       throw new ApiError(safeMessage, response.status);
     }

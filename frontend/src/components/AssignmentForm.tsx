@@ -19,7 +19,6 @@ export function AssignmentForm() {
 
   const formState = useAssignmentStore((state) => state.formState);
   const loading = useAssignmentStore((state) => state.loading);
-  const error = useAssignmentStore((state) => state.error);
 
   const setFormField = useAssignmentStore((state) => state.setFormField);
   const setQuestionTypeRow = useAssignmentStore(
@@ -404,10 +403,10 @@ export function AssignmentForm() {
             </div>
           </label>
 
-          {localError || error ? (
+          {localError ? (
             <div className="mt-4 rounded-[18px] border border-[#F3B3B3] bg-[#FFF1F1] px-5 py-4">
               <p className="font-action font-semibold text-[#C53535]">
-                {localError || error}
+                {localError}
               </p>
 
               {fieldErrors.length > 0 ? (

@@ -1,9 +1,11 @@
 import { Redis } from "ioredis";
 import { env } from "./env.js";
 
-const buildRedisClient = (name: string) => {
+const buildRedisClient = (name: string, options: { isQueue?: boolean } = {}) => {
   const client = new Redis(env.REDIS_URL, {
-    maxRetriesPerRequest: null,
+    maxRetriesPerRequest: options.isQueue ? null : 1,
+    commandTimeout: options.isQueue ? 8000 : 750,
+    connectTimeout: 5000,
     enableReadyCheck: false,
     keepAlive: 30000,
     connectionName: `vedaai-${name}`,
@@ -45,5 +47,5 @@ const buildRedisClient = (name: string) => {
   return client;
 };
 
-export const redisConnection = buildRedisClient("queue");
+export const redisConnection = buildRedisClient("queue", { isQueue: true });
 export const cacheClient = buildRedisClient("cache");

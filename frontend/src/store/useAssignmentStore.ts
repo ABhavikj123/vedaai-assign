@@ -239,7 +239,7 @@ export const useAssignmentStore = create<AssignmentStore>()(
               ...state.notifications
             ]
           }));
-          await get().fetchAssignments();
+          void get().fetchAssignments();
           return response.assignmentId;
         } catch (error) {
           set({ error: error instanceof Error ? error.message : "Could not create assignment", loading: false });
