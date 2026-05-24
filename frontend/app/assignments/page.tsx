@@ -96,7 +96,7 @@ export default function AssignmentsPage() {
         aria-label="Create assignment"
         className="fixed bottom-28 right-5 z-30 grid h-14 w-14 place-items-center rounded-full bg-white shadow-xl border border-black/5 lg:hidden"
       >
-        <Icon name="add_symbol.svg" alt="" size={22} />
+        <Icon name="add_symbol.svg" alt="" size={22}  />
       </Link>
     </AppShell>
   );

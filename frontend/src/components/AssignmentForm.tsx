@@ -264,28 +264,34 @@ export function AssignmentForm() {
           </label>
 
           <div className="mt-7">
-            <div className="hidden grid-cols-[minmax(280px,1fr)_140px_120px] items-center gap-5 px-1 md:grid">
-              <span className="font-display text-[18px] font-bold text-[#2F2F2F]">
+            <div className="px-1">
+              <span className="font-display text-[16px] font-bold text-[#2F2F2F] md:hidden">
                 Question Type
               </span>
 
-              <span className="text-center font-display text-[18px] font-bold text-[#2F2F2F]">
-                No. of Questions
-              </span>
+              <div className="hidden grid-cols-[minmax(280px,1fr)_140px_120px] items-center gap-5 md:grid">
+                <span className="font-display text-[18px] font-bold text-[#2F2F2F]">
+                  Question Type
+                </span>
 
-              <span className="text-center font-display text-[18px] font-bold text-[#2F2F2F]">
-                Marks
-              </span>
+                <span className="text-center font-display text-[18px] font-bold text-[#2F2F2F]">
+                  No. of Questions
+                </span>
+
+                <span className="text-center font-display text-[18px] font-bold text-[#2F2F2F]">
+                  Marks
+                </span>
+              </div>
             </div>
 
             <div className="mt-4 space-y-4">
               {formState.questionTypes.map((row, index) => (
                 <div
                   key={`${row.type}-${index}`}
-                  className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(280px,1fr)_32px_140px_120px] md:items-center md:gap-5"
+                  className="rounded-[24px] bg-white px-3 py-3 md:grid md:grid-cols-[minmax(280px,1fr)_32px_140px_120px] md:items-center md:gap-5 md:rounded-none md:bg-transparent md:p-0"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex-1">
+                  <div className="flex items-center gap-1">
+                    <div className="relative min-w-0 flex-1 rounded-full bg-white">
                       <select
                         value={row.type}
                         onChange={(event) =>
@@ -293,14 +299,14 @@ export function AssignmentForm() {
                             type: event.target.value
                           })
                         }
-                        className="h-[58px] w-full appearance-none rounded-full border border-[#ECECEC] bg-[#FAFAFA] px-6 pr-14 font-action text-[16px] font-medium text-[#2F2F2F] outline-none"
+                        className="h-[44px] w-full truncate appearance-none bg-transparent pl-4 pr-7 font-action text-[12px] font-medium text-[#2F2F2F] outline-none md:h-[58px] md:rounded-full md:border md:border-[#ECECEC] md:bg-[#FAFAFA] md:px-6 md:pr-14 md:text-[16px]"
                       >
                         {questionTypes.map((type) => (
                           <option key={type}>{type}</option>
                         ))}
                       </select>
 
-                      <span className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2">
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 md:right-5">
                         <Icon
                           name="chevron_down_symbol.svg"
                           alt=""
@@ -313,7 +319,7 @@ export function AssignmentForm() {
                       type="button"
                       onClick={() => removeQuestionTypeRow(index)}
                       aria-label="Remove question row"
-                      className="grid h-8 w-8 shrink-0 place-items-center"
+                      className="grid h-7 w-7 shrink-0 place-items-center md:h-8 md:w-8"
                     >
                       <Icon
                         name="cross_symbol.svg"
@@ -325,25 +331,27 @@ export function AssignmentForm() {
 
                   <div className="hidden md:block" />
 
-                  <NumberStepper
-                    label="No. of Questions"
-                    value={row.count}
-                    onChange={(value) =>
-                      setQuestionTypeRow(index, {
-                        count: value
-                      })
-                    }
-                  />
+                  <div className="mt-2 flex gap-3 rounded-[20px] bg-[#F3F3F3] p-2.5 md:mt-0 md:contents md:rounded-none md:bg-transparent md:p-0">
+                    <NumberStepper
+                      label="No. of Questions"
+                      value={row.count}
+                      onChange={(value) =>
+                        setQuestionTypeRow(index, {
+                          count: value
+                        })
+                      }
+                    />
 
-                  <NumberStepper
-                    label="Marks"
-                    value={row.marks}
-                    onChange={(value) =>
-                      setQuestionTypeRow(index, {
-                        marks: value
-                      })
-                    }
-                  />
+                    <NumberStepper
+                      label="Marks"
+                      value={row.marks}
+                      onChange={(value) =>
+                        setQuestionTypeRow(index, {
+                          marks: value
+                        })
+                      }
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -396,8 +404,8 @@ export function AssignmentForm() {
                 <Icon
                   name="Mic.svg"
                   alt=""
-                  size={18}
-                  className="opacity-100"
+                  size={30}
+                  className="text-black my-1.5"
                 />
               </button>
             </div>
@@ -461,19 +469,19 @@ function NumberStepper({
   onChange: (value: number) => void;
 }) {
   return (
-    <div className="mt-4 md:mt-0">
-      <span className="mb-3 block text-center font-action text-[15px] font-medium text-[#3A3A3A] md:hidden">
+    <div className="min-w-0 flex-1 md:min-w-[140px]">
+      <span className="mb-2 block text-center font-action text-[11px] font-medium text-[#4A4A4A] md:hidden">
         {label}
       </span>
 
-      <div className="grid h-[58px] grid-cols-3 items-center rounded-full border border-[#ECECEC] bg-[#FAFAFA] px-3">
+      <div className="grid h-[38px] grid-cols-3 items-center rounded-full bg-white px-3 md:h-[58px] md:border md:border-[#ECECEC] md:bg-[#FAFAFA]">
         <button
           type="button"
           onClick={() => onChange(Math.max(1, value - 1))}
           aria-label={`Decrease ${label}`}
           className="grid place-items-center"
         >
-          <Icon name="Minus.svg" alt="" size={14} />
+          <Icon name="Minus.svg" alt="" size={14} className="md:grayscale md:opacity-30" />
         </button>
 
         <input
@@ -483,7 +491,7 @@ function NumberStepper({
           onChange={(event) =>
             onChange(Math.max(1, Number(event.target.value)))
           }
-          className="min-w-0 bg-transparent text-center font-action text-[22px] font-semibold text-[#2E2E2E] outline-none"
+          className="min-w-0 bg-transparent text-center font-action text-[20px] font-semibold text-[#2E2E2E] outline-none md:text-[22px]"
         />
 
         <button
@@ -492,7 +500,12 @@ function NumberStepper({
           aria-label={`Increase ${label}`}
           className="grid place-items-center"
         >
-          <Icon name="add_symbol.svg" alt="" size={12} />
+          <Icon
+            name="add_symbol.svg"
+            alt=""
+            size={12}
+            className="md:grayscale md:opacity-30"
+          />
         </button>
       </div>
     </div>

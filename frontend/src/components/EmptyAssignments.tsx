@@ -20,10 +20,15 @@ export function EmptyAssignments() {
       </p>
       <Link
         href="/assignments/create"
-        className="mt-8 flex h-14 items-center gap-3 rounded-full bg-[#181818] px-7 font-action text-[18px] font-semibold text-white shadow-sm"
+        className="mt-8 inline-flex h-14 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#181818] px-5 text-[15px] font-semibold text-white shadow-sm sm:gap-3 sm:px-7 sm:text-[18px]"
       >
-        <Icon name="add_symbol.svg" alt="" size={20} className="brightness-0 invert" />
-        Create Your First Assignment
+        <span className="mb-1 flex h-[14px] w-[14px] items-center justify-center sm:mb-0 sm:h-5 sm:w-5">
+          <Icon name="add_symbol.svg" alt="" size={20} className="brightness-0 invert opacity-70"/>
+        </span>
+
+        <span className="leading-none">
+          Create Your First Assignment
+        </span>
       </Link>
     </section>
   );
