@@ -1,8 +1,9 @@
 import { Worker } from "bullmq";
 import { connectDatabase } from "../config/database.js";
-import { redisConnection, cacheClient } from "../config/redis.js";
+import { redisConnection } from "../config/redis.js";
 import { Assignment } from "../models/Assignment.js";
 import { ASSIGNMENT_QUEUE_NAME, type AssignmentJobPayload } from "../queues/assignmentQueue.js";
+import { invalidateAssignmentCaches, setCachedAssignmentStatus } from "../services/assignmentCacheService.js";
 import { generateQuestionPaper } from "../services/geminiService.js";
 import { emitAssignmentStatus } from "../services/socketService.js";
 
@@ -20,7 +21,8 @@ export const createAssignmentWorker = () => {
       assignment.status = "processing";
       assignment.failureReason = undefined;
       await assignment.save();
-      await cacheClient.set(`assignment:${assignmentId}:status`, "processing", "EX", 60 * 60);
+      await invalidateAssignmentCaches(teacherId, assignmentId);
+      await setCachedAssignmentStatus(assignmentId, "processing");
       emitAssignmentStatus(assignmentId, "processing", {
         message: "Querying Gemini AI..."
       });
@@ -32,7 +34,8 @@ export const createAssignmentWorker = () => {
         assignment.status = "completed";
         assignment.failureReason = undefined;
         await assignment.save();
-        await cacheClient.set(`assignment:${assignmentId}:status`, "completed", "EX", 60 * 60);
+        await invalidateAssignmentCaches(teacherId, assignmentId);
+        await setCachedAssignmentStatus(assignmentId, "completed");
 
         emitAssignmentStatus(assignmentId, "completed", {
           message: "Question paper generated",
@@ -45,7 +48,8 @@ export const createAssignmentWorker = () => {
         assignment.status = "failed";
         assignment.failureReason = message;
         await assignment.save();
-        await cacheClient.set(`assignment:${assignmentId}:status`, "failed", "EX", 60 * 60);
+        await invalidateAssignmentCaches(teacherId, assignmentId);
+        await setCachedAssignmentStatus(assignmentId, "failed");
         emitAssignmentStatus(assignmentId, "failed", {
           message,
           data: { failureReason: message }

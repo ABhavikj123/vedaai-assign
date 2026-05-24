@@ -4,9 +4,16 @@ import { Assignment } from "../models/Assignment.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../middlewares/errorHandler.js";
 import { enqueueAssignmentGeneration } from "../queues/assignmentQueue.js";
+import {
+  getCachedAssignment,
+  getCachedAssignmentList,
+  invalidateAssignmentCaches,
+  setCachedAssignment,
+  setCachedAssignmentList,
+  setCachedAssignmentStatus
+} from "../services/assignmentCacheService.js";
 import { extractFileData } from "../services/fileTextService.js";
 import { streamAssignmentPdf } from "../services/pdfService.js";
-import { cacheClient } from "../config/redis.js";
 
 const questionTypeSchema = z.object({
   type: z.string().trim().min(1),
@@ -51,12 +58,10 @@ const getOwnedAssignment = async (assignmentId: string, teacherId: string) => {
     throw new AppError("Invalid assignment id", 400);
   }
 
-  const cacheKey = `assignment:${assignmentId}`;
-  const cached = await cacheClient.get(cacheKey);
+  const cached = await getCachedAssignment<{ teacherId?: unknown }>(assignmentId);
   if (cached) {
-    const assignment = JSON.parse(cached);
-    if (assignment.teacherId === teacherId) {
-      return assignment;
+    if (String(cached.teacherId) === teacherId) {
+      return cached;
     }
   }
 
@@ -65,7 +70,7 @@ const getOwnedAssignment = async (assignmentId: string, teacherId: string) => {
     throw new AppError("Assignment not found", 404);
   }
 
-  await cacheClient.set(cacheKey, JSON.stringify(assignment), "EX", 600);
+  await setCachedAssignment(assignmentId, assignment);
   return assignment;
 };
 
@@ -117,14 +122,15 @@ export const createAssignment = asyncHandler(async (req, res) => {
   });
 
   try {
-    await cacheClient.del(`teacher:${teacherId}:assignments`);
+    await invalidateAssignmentCaches(teacherId, assignment._id.toString());
     await enqueueAssignmentGeneration({
       assignmentId: assignment._id.toString(),
       teacherId
     });
   } catch (error) {
     await Assignment.updateOne({ _id: assignment._id }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
-    await cacheClient.set(`assignment:${assignment._id}:status`, "failed", "EX", 3600);
+    await invalidateAssignmentCaches(teacherId, assignment._id.toString());
+    await setCachedAssignmentStatus(assignment._id.toString(), "failed");
     throw new AppError("AI generation queue is unavailable. Please check Redis and try again.", 503);
   }
 
@@ -137,18 +143,17 @@ export const createAssignment = asyncHandler(async (req, res) => {
 
 export const listAssignments = asyncHandler(async (req, res) => {
   const teacherId = req.user!._id.toString();
-  const cacheKey = `teacher:${teacherId}:assignments`;
 
-  const cached = await cacheClient.get(cacheKey);
+  const cached = await getCachedAssignmentList(teacherId);
   if (cached) {
     return res.json({
       success: true,
-      assignments: JSON.parse(cached)
+      assignments: cached
     });
   }
 
   const assignments = await Assignment.find({ teacherId }).sort({ createdAt: -1 }).lean();
-  await cacheClient.set(cacheKey, JSON.stringify(assignments), "EX", 300);
+  await setCachedAssignmentList(teacherId, assignments);
 
   return res.json({
     success: true,
@@ -169,13 +174,18 @@ export const regenerateAssignment = asyncHandler(async (req, res) => {
   const teacherId = req.user!._id.toString();
   const assignmentId = getRouteId(req.params.id);
 
-  await Assignment.updateOne(
+  const assignment = await Assignment.findOneAndUpdate(
     { _id: assignmentId, teacherId },
-    { status: "pending", generatedPaper: null, $unset: { failureReason: "" } }
-  );
+    { status: "pending", generatedPaper: null, $unset: { failureReason: "" } },
+    { new: true }
+  ).lean();
 
-  await cacheClient.del(`assignment:${assignmentId}`);
-  await cacheClient.del(`teacher:${teacherId}:assignments`);
+  if (!assignment) {
+    throw new AppError("Assignment not found", 404);
+  }
+
+  await invalidateAssignmentCaches(teacherId, assignmentId);
+  await setCachedAssignmentStatus(assignmentId, "pending");
 
   try {
     await enqueueAssignmentGeneration({
@@ -184,7 +194,8 @@ export const regenerateAssignment = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     await Assignment.updateOne({ _id: assignmentId }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
-    await cacheClient.set(`assignment:${assignmentId}:status`, "failed", "EX", 3600);
+    await invalidateAssignmentCaches(teacherId, assignmentId);
+    await setCachedAssignmentStatus(assignmentId, "failed");
     throw new AppError("AI generation queue is unavailable. Please check Redis and try again.", 503);
   }
 
@@ -199,10 +210,13 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
   const teacherId = req.user!._id.toString();
   const assignmentId = getRouteId(req.params.id);
 
-  await Assignment.deleteOne({ _id: assignmentId, teacherId });
+  const result = await Assignment.deleteOne({ _id: assignmentId, teacherId });
 
-  await cacheClient.del(`assignment:${assignmentId}`);
-  await cacheClient.del(`teacher:${teacherId}:assignments`);
+  if (result.deletedCount === 0) {
+    throw new AppError("Assignment not found", 404);
+  }
+
+  await invalidateAssignmentCaches(teacherId, assignmentId);
 
   return res.json({
     success: true
