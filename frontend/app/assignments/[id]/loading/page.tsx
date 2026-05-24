@@ -44,7 +44,6 @@ export default function AssignmentLoadingPage() {
 
   const rawError =
     assignment?.failureReason ||
-    (assignment as any)?.error ||
     globalStoreError;
 
   useEffect(() => {

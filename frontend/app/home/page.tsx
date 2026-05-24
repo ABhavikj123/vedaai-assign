@@ -9,7 +9,6 @@ import { useAssignmentStore } from "@/src/store/useAssignmentStore";
 export default function HomePage() {
   const assignments = useAssignmentStore((state) => state.activeAssignments);
   const groups = useAssignmentStore((state) => state.groups);
-  const notifications = useAssignmentStore((state) => state.notifications);
 
   return (
     <AppShell title="Home">

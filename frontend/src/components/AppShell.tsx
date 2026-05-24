@@ -24,6 +24,7 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
   const router = useRouter();
   const user = useAssignmentStore((state) => state.user);
   const isAuthenticated = useAssignmentStore((state) => state.isAuthenticated);
+  const hasHydrated = useAssignmentStore((state) => state.hasHydrated);
   const logout = useAssignmentStore((state) => state.logout);
   const assignmentCount = useAssignmentStore((state) => state.activeAssignments.length);
   const notifications = useAssignmentStore((state) => state.notifications);
@@ -33,38 +34,22 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isReady, setIsReady] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("vedaai-assignment-store");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.state?.token && parsed?.state?.isAuthenticated) {
-          setIsReady(true);
-          return;
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    }
-
-    if (pathname !== "/login" && pathname !== "/signup") {
+    if (hasHydrated && !isAuthenticated && pathname !== "/login" && pathname !== "/signup") {
       router.replace("/login");
-    } else {
-      setIsReady(true);
     }
-  }, [router, pathname]);
+  }, [hasHydrated, isAuthenticated, router, pathname]);
 
   useEffect(() => {
-    if (isReady && isAuthenticated) {
+    if (hasHydrated && isAuthenticated) {
       void fetchAssignments();
     }
-  }, [pathname, isReady, isAuthenticated, fetchAssignments]);
+  }, [pathname, hasHydrated, isAuthenticated, fetchAssignments]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -79,16 +64,12 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
-
   const handleLogoutClick = () => {
     logout();
     router.replace("/login");
   };
 
-  if (!isReady) {
+  if (!hasHydrated) {
     return (
       <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#EEEEEE] to-[#DADADA] font-display font-bold text-[#303030]">
         <div className="text-center space-y-3">

@@ -15,8 +15,7 @@ export function EmptyAssignments() {
       />
       <h1 className="mt-6 font-display text-[24px] font-extrabold md:text-[30px]">No assignments yet</h1>
       <p className="mt-3 max-w-[620px] font-action text-[16px] leading-7 text-[#777] md:text-[20px]">
-        Create your first assignment to start collecting and grading student submissions. You can set up rubrics,
-        define marking criteria, and let AI assist with grading.
+        Create your first AI-generated paper with subject, class, instructions, and question pattern details.
       </p>
       <Link
         href="/assignments/create"

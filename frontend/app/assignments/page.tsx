@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { AppShell } from "@/src/components/AppShell";
 import { AssignmentCard } from "@/src/components/AssignmentCard";
 import { EmptyAssignments } from "@/src/components/EmptyAssignments";
@@ -13,29 +14,62 @@ export default function AssignmentsPage() {
   const setSearch = useAssignmentStore((state) => state.setSearch);
   const loading = useAssignmentStore((state) => state.loading);
   const error = useAssignmentStore((state) => state.error);
+  const clearError = useAssignmentStore((state) => state.clearError);
+  const fetchAssignments = useAssignmentStore((state) => state.fetchAssignments);
+
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
 
   const filtered = assignments
     .filter((assignment) => assignment.title.toLowerCase().includes(search.toLowerCase()))
   return (
     <AppShell title="Assignment">
       <main className="flex-1 w-full pb-24">
-        {error ? (
-          <div className="grid h-48 place-items-center w-full">
-            <div className="rounded-2xl bg-red-50 p-6 text-center max-w-md border border-red-100">
-              <p className="font-action text-red-600 font-semibold">{error}</p>
-            </div>
-          </div>
-        ) : loading && assignments.length === 0 ? (
+        {loading && assignments.length === 0 ? (
           <div className="grid h-64 place-items-center w-full">
             <div className="text-center space-y-2">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#303030] border-t-transparent mx-auto" />
               <p className="font-action text-sm font-medium text-[#5E5E5E]">Loading assignments list...</p>
             </div>
           </div>
+        ) : error && assignments.length === 0 ? (
+          <div className="grid min-h-[calc(100vh-140px)] place-items-center px-4 text-center">
+            <div className="max-w-[520px] rounded-2xl border border-black/10 bg-white/80 p-6 shadow-sm backdrop-blur">
+              <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#fff2ed]">
+                <Icon name="assignments_logo.svg" alt="" size={22} />
+              </div>
+              <h1 className="mt-4 font-display text-[24px] font-extrabold text-[#303030]">
+                Assignments are not available right now
+              </h1>
+              <p className="mt-3 font-action text-sm leading-6 text-[#6b6b6b]">
+                Your workspace is safe. We could not refresh the assignment list, so please try again in a moment.
+              </p>
+              <button
+                type="button"
+                onClick={() => void fetchAssignments()}
+                className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-[#181818] px-6 font-action text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#272727]"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
         ) : assignments.length === 0 ? (
           <EmptyAssignments />
         ) : (
           <div className="space-y-5 w-full">
+            {error ? (
+              <div className="mx-2 flex items-center justify-between gap-4 rounded-2xl border border-[#ffd7ca] bg-[#fff7f4] px-4 py-3 font-action text-sm text-[#8a3a20] md:mx-4">
+                <span>We could not refresh the latest assignment changes.</span>
+                <button
+                  type="button"
+                  onClick={() => void fetchAssignments()}
+                  className="shrink-0 rounded-full bg-white px-4 py-2 font-semibold text-[#303030] shadow-sm"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : null}
             <section className="flex items-center gap-4 px-2 md:px-4">
               <span className="h-5 w-5 rounded-full border-4 border-[#9de3b3] bg-[#43c46d] shadow-sm" />
               <div>

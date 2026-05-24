@@ -11,7 +11,7 @@ export default function ToolkitPage() {
           <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-neutral-100">
             <Icon name="AI_Teacher_toolkit_symbol.svg" alt="" size={34} />
           </div>
-          <h1 className="mt-6 font-display text-2xl font-extrabold text-[#303030]">Teacher's Toolkit</h1>
+          <h1 className="mt-6 font-display text-2xl font-extrabold text-[#303030]">Teacher&apos;s Toolkit</h1>
           <p className="mt-2 font-action text-base text-[#777] leading-relaxed max-w-sm mx-auto">
             Advanced system prompt tuning profiles and curriculum parameter matching interfaces are coming soon.
           </p>
