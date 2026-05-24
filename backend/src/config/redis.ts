@@ -4,7 +4,7 @@ import { env } from "./env.js";
 const buildRedisClient = (name: string, options: { isQueue?: boolean } = {}) => {
   const client = new Redis(env.REDIS_URL, {
     maxRetriesPerRequest: options.isQueue ? null : 1,
-    commandTimeout: options.isQueue ? 8000 : 750,
+    commandTimeout: options.isQueue ? undefined : 750,
     connectTimeout: 5000,
     enableReadyCheck: false,
     keepAlive: 30000,

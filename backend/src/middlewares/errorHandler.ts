@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Response } from "express";
+import multer from "multer";
 import { ZodError } from "zod";
 import { env } from "../config/env.js";
 
@@ -25,11 +26,22 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   _next: NextFunction
 ) => {
+  if (!(error instanceof AppError) && !(error instanceof ZodError) && env.NODE_ENV === "production") {
+    console.error("Unhandled request error", error);
+  }
+
   if (error instanceof ZodError) {
     return res.status(422).json({
       success: false,
       message: "Validation failed",
       errors: error.flatten().fieldErrors
+    });
+  }
+
+  if (error instanceof multer.MulterError) {
+    return res.status(400).json({
+      success: false,
+      message: error.code === "LIMIT_FILE_SIZE" ? "Uploaded file must be 8MB or smaller" : error.message
     });
   }
 

@@ -149,6 +149,14 @@ export const createAssignment = asyncHandler(async (req, res) => {
       "Assignment generation queue timed out"
     );
   } catch (error) {
+    console.error(
+      "Failed to enqueue assignment generation",
+      {
+        assignmentId: assignment._id.toString(),
+        teacherId,
+        error: error instanceof Error ? error.message : error
+      }
+    );
     await Assignment.updateOne({ _id: assignment._id }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
     void invalidateAssignmentCaches(teacherId, assignment._id.toString());
     void setCachedAssignmentStatus(assignment._id.toString(), "failed");
@@ -218,6 +226,14 @@ export const regenerateAssignment = asyncHandler(async (req, res) => {
       "Assignment generation queue timed out"
     );
   } catch (error) {
+    console.error(
+      "Failed to enqueue assignment regeneration",
+      {
+        assignmentId,
+        teacherId,
+        error: error instanceof Error ? error.message : error
+      }
+    );
     await Assignment.updateOne({ _id: assignmentId }, { status: "failed", failureReason: error instanceof Error ? `Queue unavailable: ${error.message}` : "Queue unavailable" });
     void invalidateAssignmentCaches(teacherId, assignmentId);
     void setCachedAssignmentStatus(assignmentId, "failed");
