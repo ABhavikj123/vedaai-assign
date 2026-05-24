@@ -24,7 +24,6 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
   const router = useRouter();
   const user = useAssignmentStore((state) => state.user);
   const isAuthenticated = useAssignmentStore((state) => state.isAuthenticated);
-  const hasHydrated = useAssignmentStore((state) => state.hasHydrated);
   const logout = useAssignmentStore((state) => state.logout);
   const assignmentCount = useAssignmentStore((state) => state.activeAssignments.length);
   const notifications = useAssignmentStore((state) => state.notifications);
@@ -34,22 +33,50 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   useEffect(() => {
-    if (hasHydrated && !isAuthenticated && pathname !== "/login" && pathname !== "/signup") {
-      router.replace("/login");
-    }
-  }, [hasHydrated, isAuthenticated, router, pathname]);
+    let cancelled = false;
+
+    const prepareShell = async () => {
+      try {
+        if (!useAssignmentStore.persist.hasHydrated()) {
+          await useAssignmentStore.persist.rehydrate();
+        }
+      } catch (error) {
+        console.error("Could not restore saved session", error);
+      } finally {
+        if (!cancelled) {
+          setIsReady(true);
+        }
+      }
+    };
+
+    void prepareShell();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
-    if (hasHydrated && isAuthenticated) {
+    if (!isReady) {
+      return;
+    }
+
+    if (!isAuthenticated && pathname !== "/login" && pathname !== "/signup") {
+      router.replace("/login");
+      return;
+    }
+
+    if (isAuthenticated) {
       void fetchAssignments();
     }
-  }, [pathname, hasHydrated, isAuthenticated, fetchAssignments]);
+  }, [pathname, isReady, isAuthenticated, router, fetchAssignments]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -69,7 +96,7 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
     router.replace("/login");
   };
 
-  if (!hasHydrated) {
+  if (!isReady) {
     return (
       <div className="grid min-h-screen place-items-center bg-gradient-to-b from-[#EEEEEE] to-[#DADADA] font-display font-bold text-[#303030]">
         <div className="text-center space-y-3">
