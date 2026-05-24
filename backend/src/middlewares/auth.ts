@@ -11,13 +11,18 @@ export const protect = asyncHandler(async (req, _res, next) => {
   }
 
   const token = header.slice("Bearer ".length);
-  const decoded = verifyToken(token);
-  const user = await User.findById(decoded.sub);
 
-  if (!user) {
-    throw new AppError("Authenticated user no longer exists", 401);
+  try {
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.sub);
+
+    if (!user) {
+      throw new AppError("Authenticated user no longer exists", 401);
+    }
+
+    req.user = user;
+    next();
+  } catch (jwtError) {
+    throw new AppError("Your session has expired. Please log in again.", 401);
   }
-
-  req.user = user;
-  next();
 });

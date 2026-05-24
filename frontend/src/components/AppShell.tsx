@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { Icon } from "@/src/components/Icon";
 import { useAssignmentStore } from "@/src/store/useAssignmentStore";
+import { ApiError } from "../lib/api";
 
 const navItems = [
   { href: "/home", label: "Home", icon: "four_box_symbol.svg", mobileIcon: "home_symbol_mobile.svg" },
@@ -73,9 +74,22 @@ export function AppShell({ children, title = "Assignment" }: { children: React.R
       return;
     }
 
-    if (isAuthenticated) {
-      void fetchAssignments();
-    }
+    const syncUserWorkspace = async () => {
+      if (isAuthenticated) {
+        try {
+          await fetchAssignments();
+        } catch (error) {
+          if (error instanceof ApiError && error.status === 401) {
+            console.warn("Session expiration caught inside AppShell. Purging tracking data...");
+            useAssignmentStore.getState().clearSessionState();
+            localStorage.removeItem("vedaai-assignment-store");
+            router.replace("/login");
+          }
+        }
+      }
+    };
+
+    void syncUserWorkspace();
   }, [pathname, isReady, isAuthenticated, router, fetchAssignments]);
 
   useEffect(() => {

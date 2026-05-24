@@ -40,13 +40,16 @@ async function request<T>(path: string, options: ApiOptions = {}): Promise<T> {
     const body = contentType?.includes("application/json") ? await response.json() : null;
 
     if (!response.ok) {
+      if (response.status === 401) {
+        throw new ApiError(body?.message || "Your session has expired. Please log in again.", 401);
+      }
+
       const safeMessage =
         response.status >= 500
-          ? body?.message || "The server could not complete this action. Please try again after a moment."
+          ? "The server could not complete this action. Please try again after a moment."
           : body?.message || "Request failed";
       throw new ApiError(safeMessage, response.status);
     }
-
     return body as T;
   } catch (error) {
     clearTimeout(timeoutId);

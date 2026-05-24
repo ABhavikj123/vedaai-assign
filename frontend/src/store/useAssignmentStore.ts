@@ -71,6 +71,7 @@ interface AssignmentStore {
   cloneAssignmentParameters: (assignment: Assignment) => void;
   setSearch: (value: string) => void;
   setRealTimeStatus: (id: string, status: AssignmentStatus, paper?: GeneratedPaper) => void;
+  clearSessionState: () => void;
 }
 
 export const useAssignmentStore = create<AssignmentStore>()(
@@ -124,6 +125,18 @@ export const useAssignmentStore = create<AssignmentStore>()(
           notifications: [],
           groups: [],
           toolkitRules: [],
+          error: null
+        });
+      },
+
+      clearSessionState() {
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          activeAssignments: [],
+          realTimeStatus: {},
+          currentPaper: null,
           error: null
         });
       },

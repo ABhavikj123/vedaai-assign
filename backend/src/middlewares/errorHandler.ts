@@ -1,4 +1,4 @@
-import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Response } from "express";
+import type { ErrorRequestHandler, NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { ZodError } from "zod";
 import { env } from "../config/env.js";
@@ -16,7 +16,7 @@ interface HttpError extends Error {
   statusCode?: number;
 }
 
-export const notFoundHandler: RequestHandler = (req: Request, _res: Response, next: NextFunction) => {
+export const notFoundHandler = (req: Request, _res: Response, next: NextFunction) => {
   next(new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404));
 };
 
@@ -26,9 +26,7 @@ export const errorHandler: ErrorRequestHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  if (!(error instanceof AppError) && !(error instanceof ZodError) && env.NODE_ENV === "production") {
-    console.error("Unhandled request error", error);
-  }
+  console.error("[Request Error Exception Log]:", error);
 
   if (error instanceof ZodError) {
     return res.status(422).json({
@@ -45,10 +43,15 @@ export const errorHandler: ErrorRequestHandler = (
     });
   }
 
-  const statusCode = error.statusCode || 500;
+  const statusCode = (error as HttpError).statusCode || 500;
+  
+  const message = statusCode === 500 
+    ? "Internal server error" 
+    : error.message;
+
   const payload: Record<string, unknown> = {
     success: false,
-    message: statusCode === 500 ? "Internal server error" : error.message
+    message
   };
 
   if (env.NODE_ENV !== "production") {
