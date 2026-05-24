@@ -4,7 +4,7 @@ import type { Response } from "express";
 import type { AssignmentDocument } from "../models/Assignment.js";
 
 const drawLine = (
-  doc: PDFKit.PDFDocument,
+  doc: InstanceType<typeof PDFDocument>,
   x1: number,
   y: number,
   x2: number
@@ -45,7 +45,7 @@ export const streamAssignmentPdf = (
 
   const chunks: Buffer[] = [];
 
-  doc.on("data", (chunk) => {
+  doc.on("data", (chunk: Buffer) => {
     chunks.push(chunk);
   });
 

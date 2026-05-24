@@ -1,4 +1,4 @@
-import type { ErrorRequestHandler, RequestHandler } from "express";
+import type { ErrorRequestHandler, NextFunction, Request, RequestHandler, Response } from "express";
 import { ZodError } from "zod";
 import { env } from "../config/env.js";
 
@@ -11,11 +11,20 @@ export class AppError extends Error {
   }
 }
 
-export const notFoundHandler: RequestHandler = (req, _res, next) => {
+interface HttpError extends Error {
+  statusCode?: number;
+}
+
+export const notFoundHandler: RequestHandler = (req: Request, _res: Response, next: NextFunction) => {
   next(new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404));
 };
 
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (
+  error: HttpError | ZodError,
+  _req: Request,
+  res: Response,
+  _next: NextFunction
+) => {
   if (error instanceof ZodError) {
     return res.status(422).json({
       success: false,

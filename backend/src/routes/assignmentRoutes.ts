@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import multer from "multer";
 import {
   createAssignment,
@@ -15,7 +15,11 @@ const upload = multer({
   limits: {
     fileSize: 8 * 1024 * 1024
   },
-  fileFilter: (_req, file, callback) => {
+  fileFilter: (
+    _req: Request,
+    file: Express.Multer.File,
+    callback: multer.FileFilterCallback
+  ): void => {
     const allowed = file.mimetype === "application/pdf" || file.mimetype.startsWith("text/");
     if (!allowed) {
       callback(new Error("Only PDF and text files are supported"));

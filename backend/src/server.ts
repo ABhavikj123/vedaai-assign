@@ -1,6 +1,6 @@
 import http from "node:http";
 import cors from "cors";
-import express from "express";
+import express, { type Request, type Response } from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { Server } from "socket.io";
@@ -84,7 +84,7 @@ app.use(
   })
 );
 
-app.get("/health", async (_req, res) => {
+app.get("/health", async (_req: Request, res: Response) => {
   let redis = "unknown";
   try {
     redis = await cacheClient.ping();

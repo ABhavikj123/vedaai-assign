@@ -1,3 +1,5 @@
+import "multer";
+
 const MAX_INLINE_FILE_SIZE = 20 * 1024 * 1024;
 
 export interface FileData {
