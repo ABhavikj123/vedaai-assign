@@ -19,17 +19,20 @@ export default function SignupPage() {
     schoolAddress: ""
   });
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     clearError();
     return () => clearError();
   }, [clearError]);
 
-  const valid =
-    /^\S+@\S+\.\S+$/.test(form.email) &&
-    form.password.length >= 8 &&
-    form.fullName.trim().length > 1 &&
-    form.schoolName.trim().length > 1 &&
-    form.schoolAddress.trim().length > 1;
+  const emailOk = /^\S+@\S+\.\S+$/.test(form.email);
+  const passwordOk = form.password.length >= 8;
+  const fullNameOk = form.fullName.trim().length > 1;
+  const schoolNameOk = form.schoolName.trim().length > 1;
+  const schoolAddressOk = form.schoolAddress.trim().length > 1;
+
+  const valid = emailOk && passwordOk && fullNameOk && schoolNameOk && schoolAddressOk;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -39,6 +42,14 @@ export default function SignupPage() {
     } catch {
       return;
     }
+  };
+
+  const validators: Record<string, { ok: boolean; message: string }> = {
+    fullName: { ok: fullNameOk, message: "Please enter your full name (at least 2 characters)." },
+    email: { ok: emailOk, message: "Please enter a valid email address." },
+    password: { ok: passwordOk, message: "Password must be at least 8 characters long." },
+    schoolName: { ok: schoolNameOk, message: "Please enter your school name (at least 2 characters)." },
+    schoolAddress: { ok: schoolAddressOk, message: "Please enter your school address (at least 2 characters)." }
   };
 
   return (
@@ -53,18 +64,29 @@ export default function SignupPage() {
             ["password", "Password", "password"],
             ["schoolName", "School Name", "text"],
             ["schoolAddress", "School Address", "text"]
-          ].map(([key, label, type]) => (
-            <label key={key} className={`field-label ${key === "schoolAddress" ? "md:col-span-2" : ""}`}>
-              {label}
-              <input
-                className="field-input"
-                type={type}
-                value={form[key as keyof typeof form]}
-                onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                required
-              />
-            </label>
-          ))}
+          ].map(([key, label, type]) => {
+            const k = key as string;
+            const v = validators[k];
+            const showError = touched[k] && !v.ok;
+
+            return (
+              <label key={k} className={`field-label ${k === "schoolAddress" ? "md:col-span-2" : ""}`}>
+                {label}
+                <input
+                  className={`field-input ${showError ? "ring-1 ring-[#c53535]" : ""}`}
+                  type={type}
+                  value={(form as any)[k]}
+                  onChange={(event) => setForm((current) => ({ ...current, [k]: event.target.value }))}
+                  onBlur={() => setTouched((current) => ({ ...current, [k]: true }))}
+                  aria-invalid={showError}
+                  required
+                />
+                {showError ? (
+                  <p className="mt-2 text-sm font-action text-[#c53535]">{v.message}</p>
+                ) : null}
+              </label>
+            );
+          })}
         </div>
         {error ? <p className="mt-4 font-action text-sm font-semibold text-[#c53535]">{error}</p> : null}
         <button
