@@ -27,10 +27,15 @@ export default function SignupPage() {
   }, [clearError]);
 
   const emailOk = /^\S+@\S+\.\S+$/.test(form.email);
-  const passwordOk = form.password.length >= 8;
   const fullNameOk = form.fullName.trim().length > 1;
   const schoolNameOk = form.schoolName.trim().length > 1;
   const schoolAddressOk = form.schoolAddress.trim().length > 1;
+
+  const passwordLength = form.password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(form.password);
+  const hasLowercase = /[a-z]/.test(form.password);
+  const hasNumber = /\d/.test(form.password);
+  const passwordOk = passwordLength && hasUppercase && hasLowercase && hasNumber;
 
   const valid = emailOk && passwordOk && fullNameOk && schoolNameOk && schoolAddressOk;
 
@@ -47,9 +52,13 @@ export default function SignupPage() {
   const validators: Record<string, { ok: boolean; message: string }> = {
     fullName: { ok: fullNameOk, message: "Please enter your full name (at least 2 characters)." },
     email: { ok: emailOk, message: "Please enter a valid email address." },
-    password: { ok: passwordOk, message: "Password must be at least 8 characters long." },
+    password: { ok: passwordOk, message: "Password requirements not met" },
     schoolName: { ok: schoolNameOk, message: "Please enter your school name (at least 2 characters)." },
     schoolAddress: { ok: schoolAddressOk, message: "Please enter your school address (at least 2 characters)." }
+  };
+
+  const getPasswordRequirementStatus = (isValid: boolean) => {
+    return isValid ? "text-green-600" : "text-gray-400";
   };
 
   return (
@@ -68,27 +77,62 @@ export default function SignupPage() {
             const k = key as string;
             const v = validators[k];
             const showError = touched[k] && !v.ok;
+            const isPasswordField = k === "password";
 
             return (
-              <label key={k} className={`field-label ${k === "schoolAddress" ? "md:col-span-2" : ""}`}>
-                {label}
-                <input
-                  className={`field-input ${showError ? "ring-1 ring-[#c53535]" : ""}`}
-                  type={type}
-                  value={(form as any)[k]}
-                  onChange={(event) => setForm((current) => ({ ...current, [k]: event.target.value }))}
-                  onBlur={() => setTouched((current) => ({ ...current, [k]: true }))}
-                  aria-invalid={showError}
-                  required
-                />
-                {showError ? (
+              <div key={k} className={isPasswordField ? "md:col-span-2" : ""}>
+                <label className="field-label">
+                  {label}
+                  <input
+                    className={`field-input ${showError ? "ring-1 ring-[#c53535]" : ""}`}
+                    type={type}
+                    value={(form as any)[k]}
+                    onChange={(event) => setForm((current) => ({ ...current, [k]: event.target.value }))}
+                    onBlur={() => setTouched((current) => ({ ...current, [k]: true }))}
+                    aria-invalid={showError}
+                    required
+                  />
+                </label>
+
+                {isPasswordField && (form.password.length > 0 || touched[k]) && (
+                  <div className="mt-3 rounded-lg bg-gray-50 p-3 border border-gray-200">
+                    <p className="text-xs font-semibold text-gray-700 mb-2">Password requirements:</p>
+                    <ul className="space-y-1.5 text-xs">
+                      <li className={`flex items-center gap-2 ${getPasswordRequirementStatus(passwordLength)}`}>
+                        <span className={`text-lg ${passwordLength ? "✓" : "○"}`}></span>
+                        At least 8 characters
+                      </li>
+                      <li className={`flex items-center gap-2 ${getPasswordRequirementStatus(hasUppercase)}`}>
+                        <span className={`text-lg ${hasUppercase ? "✓" : "○"}`}></span>
+                        One uppercase letter (A-Z)
+                      </li>
+                      <li className={`flex items-center gap-2 ${getPasswordRequirementStatus(hasLowercase)}`}>
+                        <span className={`text-lg ${hasLowercase ? "✓" : "○"}`}></span>
+                        One lowercase letter (a-z)
+                      </li>
+                      <li className={`flex items-center gap-2 ${getPasswordRequirementStatus(hasNumber)}`}>
+                        <span className={`text-lg ${hasNumber ? "✓" : "○"}`}></span>
+                        One number (0-9)
+                      </li>
+                    </ul>
+                  </div>
+                )}
+
+                {showError && !isPasswordField && (
                   <p className="mt-2 text-sm font-action text-[#c53535]">{v.message}</p>
-                ) : null}
-              </label>
+                )}
+              </div>
             );
           })}
         </div>
-        {error ? <p className="mt-4 font-action text-sm font-semibold text-[#c53535]">{error}</p> : null}
+
+        {error && (
+          <div className="mt-4 rounded-lg bg-red-50 border border-red-200 p-3">
+            <p className="font-action text-sm font-semibold text-[#c53535]">{error}</p>
+            <p className="font-action text-xs text-gray-600 mt-1">Please check your information and try again.</p>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={loading || !valid}
